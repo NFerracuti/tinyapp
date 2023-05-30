@@ -52,10 +52,22 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+app.post("/e", (req, res) => {
+  const id = req.body.id;
+  res.redirect(`/urls/${id}`);
+});
+
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
+});
+
+app.post("/urls/:id/update", (req, res) => {
+  const id = req.params.id;
+  const longURL = req.body.updatedURL
+  urlDatabase[id] = longURL;
+  res.redirect(`/urls/${id}`);
 });
 
 app.get("/u/:id", (req, res) => {
