@@ -52,6 +52,14 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+app.get("/register", (req, res) => {
+  const username = req.cookies["username"];
+  const templateVars = { 
+    username,
+  };
+  res.render("register", templateVars);
+});
+
 app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
