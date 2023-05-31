@@ -7,6 +7,7 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// function to generate random string of 6 characters
 const generateRandomString = function() {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -16,6 +17,17 @@ const generateRandomString = function() {
     counter += 1;
   }
   return result;
+};
+
+// function to check if a user value exists. key can only be id, email, or password
+// if it exists, it returns that users full object (truthy), otherwise returns null (falsy)
+const userLookup = function(key, value) {
+  for (let i in users) {
+    if (users[i][key] === value) {
+      return users[i];
+    }
+  }
+  return null;
 };
 
 const users = {
@@ -80,15 +92,26 @@ app.post("/nu", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const id = generateRandomString();
-  users[id] = {
-    "id": id,
-    "email": email,
-    "password": password,
+
+  if (email.length < 1 || password.length < 1) {
+    res
+    .status(400)
+    .send("Error status 400, both email and password must contain a value.");
+  } else if (userLookup("email", email)) {
+    res
+    .status(400)
+    .send("Error status 400, email already exists in system.");
+  } else {
+    users[id] = {
+      "id": id,
+      "email": email,
+      "password": password,
+    };
+    res
+      .status(201)
+      .cookie("user_id", id)
+      .redirect(301, '/urls');
   };
-  res
-    .status(201)
-    .cookie("user_id", id)
-    .redirect(301, '/urls');
 });
 
 app.post("/login", (req, res) => {
