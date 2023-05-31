@@ -1,10 +1,11 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const cookieParser = require("cookie-parser");
 
 app.set("view engine", "ejs");
-
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 const generateRandomString = function() {
   let result = '';
@@ -31,7 +32,11 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const username = req.cookies["username"]
+  const templateVars = { 
+    urls: urlDatabase, 
+    username,
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -40,24 +45,29 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const username = req.cookies["username"];
+  const templateVars = { 
+    username,
+  };
+  res.render("urls_new", templateVars);
 });
 
-app.post("/login", (req, res) =>{
+app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
-  console.log(username)
+  console.log(username);
+
   res
-  .status(201)
-  .cookie(username, username)
-  .redirect(301, '/urls')
+    .status(201)
+    .cookie("username", username)
+    .redirect(301, '/urls');
 });
 
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
-  const id = generateRandomString(); // Use the generateRandomString function to generate a unique ID
+  const id = generateRandomString();
 
-  urlDatabase[id] = longURL; // Save the id-longURL pair to the urlDatabase
+  urlDatabase[id] = longURL;
 
   res.redirect(`/urls/${id}`);
 });
@@ -91,7 +101,12 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const username = req.cookies["username"];
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username,
+  };
   res.render("urls_show", templateVars);
 });
 
