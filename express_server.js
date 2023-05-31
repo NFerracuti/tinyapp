@@ -43,6 +43,16 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+app.post("/login", (req, res) =>{
+  const username = req.body.username;
+  const password = req.body.password;
+  console.log(username)
+  res
+  .status(201)
+  .cookie(username, username)
+  .redirect(301, '/urls')
+});
+
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const id = generateRandomString(); // Use the generateRandomString function to generate a unique ID
