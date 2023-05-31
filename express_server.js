@@ -18,6 +18,19 @@ const generateRandomString = function() {
   return result;
 };
 
+const users = {
+  pppppp: {
+    id: "nick",
+    email: "n@n.com",
+    password: "1234",
+  },
+  llllll: {
+    id: "bob",
+    email: "b@b.com",
+    password: "5678",
+  },
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -32,10 +45,11 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const username = req.cookies["username"]
+  const user_id = req.cookies["user_id"];
+  const user = users[user_id];
   const templateVars = { 
     urls: urlDatabase, 
-    username,
+    user,
   };
   res.render("urls_index", templateVars);
 });
@@ -45,26 +59,41 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const username = req.cookies["username"];
+  const user_id = req.cookies["user_id"];
+  const user = users[user_id];
   const templateVars = { 
-    username,
+    user
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const username = req.cookies["username"];
+  const user_id = req.cookies["user_id"];
+  const user = users[user_id];
   const templateVars = { 
-    username,
+    user,
   };
   res.render("register", templateVars);
+});
+
+app.post("/nu", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const id = generateRandomString();
+  users[id] = {
+    "id": id,
+    "email": email,
+    "password": password,
+  };
+  res
+    .status(201)
+    .cookie("user_id", id)
+    .redirect(301, '/urls');
 });
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
-  console.log(username);
-
   res
     .status(201)
     .cookie("username", username)
@@ -117,11 +146,12 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const username = req.cookies["username"];
+  const user_id = req.cookies["user_id"];
+  const user = users[user_id];
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username,
+    user
   };
   res.render("urls_show", templateVars);
 });
