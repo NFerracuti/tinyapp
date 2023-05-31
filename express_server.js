@@ -63,6 +63,14 @@ app.post("/login", (req, res) => {
     .redirect(301, '/urls');
 });
 
+app.post("/logout", (req, res) => {
+  const username = req.body.username;
+
+  res
+    .clearCookie('username', username)
+    .redirect(301, '/urls');
+});
+
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const id = generateRandomString();

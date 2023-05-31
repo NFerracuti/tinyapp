@@ -18,10 +18,17 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <form method="POST" action="/login">
-      <input type="text" name="username" id="username" placeholder="username" />
-      <button type="submit" class="btn btn-outline-dark">Login</button>
-    </form>
-    <text> <%= username %></text> <!-- Access the cookie value -->
+    <% if (username) { %>
+      <text> &nbsp Logged in as: <%= username %> &nbsp </text>
+      <form method="POST" action="/logout">
+        <input type="hidden" name="logout">
+        <button type="submit" class="btn btn-outline-dark">logout</button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/login">
+        <input type="text" name="username" id="username" placeholder="username" />
+        <button type="submit" class="btn btn-outline-dark">Login</button>
+      </form>
+    <% } %>
   </nav>
 </header>
