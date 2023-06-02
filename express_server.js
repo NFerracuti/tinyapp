@@ -1,12 +1,15 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");  // for hashing passwords
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['ferracuti'],
+}));
 
 //require helper functions
 const { userLookup, urlsForUser, generateRandomString } = require('./helperfunctions');
@@ -28,7 +31,7 @@ app.get("/urls.json", (req, res) => {
 // Home Page - displays your URLs
 //---------------------------
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   const user = users[user_id];
   const urls = urlsForUser(user_id, urlDatabase);
   const templateVars = { 
@@ -41,7 +44,7 @@ app.get("/urls", (req, res) => {
 // Create a new URL page
 //---------------------------
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   const user = users[user_id];
   const templateVars = { 
     user
@@ -56,7 +59,7 @@ app.get("/urls/new", (req, res) => {
 // Register new user page
 //---------------------------
 app.get("/register", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   const user = users[user_id];
   const templateVars = { 
     user,
@@ -71,7 +74,7 @@ app.get("/register", (req, res) => {
 // Login page
 //---------------------------
 app.get("/login", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   const user = users[user_id];
   const templateVars = {
     user,
@@ -105,7 +108,7 @@ app.get("/u/:id", (req, res) => {
 //---------------------------
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   const user = users[user_id];
   const userUrls = urlsForUser(user_id, urlDatabase);
   const targetUrlObj = urlDatabase[id];
@@ -157,10 +160,10 @@ app.post("/register", (req, res) => {
       "email": email,
       "hashedPassword": hashedPassword,
     };
+    req.session.user_id = id;
     res
-      .status(201)
-      .cookie("user_id", id)
-      .redirect(301, '/urls');
+    .status(201)
+    .redirect(301, '/urls');
   };
 });
 
@@ -185,9 +188,9 @@ app.post("/login", (req, res) => {
     .send("401: Wrong password!");
   } else {
     const id = userObj.id;
+    req.session.user_id = id;
     res
     .status(201)
-    .cookie("user_id", id)
     .redirect(301, '/urls');
   };
 });
@@ -207,15 +210,14 @@ app.post("/registerbutton", (req, res) => {
 // logout button in header
 //---------------------------
 app.post("/logout", (req, res) => {
-  const user_id = req.cookies.user_id;
+  req.session = null
   res
-    .clearCookie('user_id', user_id)
     .redirect(301, '/login');
 });
 
 
 app.post("/urls", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   let longURL = req.body.longURL;
 
   if (!longURL.startsWith("http://")) {
@@ -246,7 +248,7 @@ app.post("/edit", (req, res) => {
 //---------------------------
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session["user_id"];
   const userUrls = urlsForUser(user_id, urlDatabase);
 
   //ensures the user is logged in, owns the url, and the url exists

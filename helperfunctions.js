@@ -1,4 +1,5 @@
-// function to check if a user value exists. key should only be id, email, or password
+// function to check if a user value exists, and return
+// all the user data using the key: either id, email, or password
 // returns user object (truthy), or null (falsy)
 const userLookup = function(users, key, value) {
   for (let i in users) {
