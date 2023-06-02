@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");  // for hashing passwords
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -140,6 +141,7 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const id = generateRandomString();
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (email.length < 1 || password.length < 1) {
     res
@@ -153,7 +155,7 @@ app.post("/register", (req, res) => {
     users[id] = {
       "id": id,
       "email": email,
-      "password": password,
+      "hashedPassword": hashedPassword,
     };
     res
       .status(201)
@@ -169,15 +171,18 @@ app.post("/login", (req, res) => {
   const inputEmail = req.body.email;
   const inputPassword = req.body.password;
   const userObj = userLookup(users, "email", inputEmail);
+  const password = req.body.password;
+  const hashedPassword = userObj.hashedPassword;
 
   // edge case for logging in with a non-registered email
   if (!userLookup(users, "email", inputEmail)) {
     res.status(404).send("404: No user registered under that email.");
 
   // for wrong password
-  } else if (userObj.password !== inputPassword) {
-    res.send("Wrong password!");
-
+  } else if (!bcrypt.compareSync(password, hashedPassword)) {
+    res
+    .status(401)
+    .send("401: Wrong password!");
   } else {
     const id = userObj.id;
     res
