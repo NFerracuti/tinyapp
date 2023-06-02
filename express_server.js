@@ -7,117 +7,134 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// function to generate random string of 6 characters
-const generateRandomString = function() {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let counter = 0;
-  while (counter < 7) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-    counter += 1;
-  }
-  return result;
-};
-
-// function to check if a user value exists. key can only be id, email, or password
-// returns full object (truthy), or null (falsy)
-const userLookup = function(key, value) {
-  for (let i in users) {
-    if (users[i][key] === value) {
-      return users[i];
-    }
-  }
-  return null;
-};
+//require helper functions
+const { userLookup, urlsForUser, generateRandomString } = require('./helperfunctions');
 
 // USERS OBJECT
-const users = {
-  pppppp: {
-    id: "nick",
-    email: "n@n.com",
-    password: "1234",
-  },
-  llllll: {
-    id: "bob",
-    email: "b@b.com",
-    password: "5678",
-  },
-};
+const users = {}
 
 // URL DATABASE
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
+const urlDatabase = {};
 
-
+//-----------------------------------------------
 // GETS START HERE
+//-----------------------------------------------
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// Home Page - displays your URLs
+//---------------------------
 app.get("/urls", (req, res) => {
   const user_id = req.cookies["user_id"];
   const user = users[user_id];
+  const urls = urlsForUser(user_id, urlDatabase);
   const templateVars = { 
-    urls: urlDatabase, 
+    urls,
     user,
   };
   res.render("urls_index", templateVars);
 });
 
+// Create a new URL page
+//---------------------------
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies["user_id"];
   const user = users[user_id];
   const templateVars = { 
     user
   };
-  res.render("urls_new", templateVars);
+  if (!user_id) {
+    res.render("login", templateVars);
+  } else {
+    res.render("urls_new", templateVars);
+  }
 });
 
+// Register new user page
+//---------------------------
 app.get("/register", (req, res) => {
   const user_id = req.cookies["user_id"];
   const user = users[user_id];
   const templateVars = { 
     user,
   };
-  res.render("register", templateVars);
+  if (user_id) {
+    res.redirect("/urls");
+  } else {
+    res.render("register", templateVars);
+  }
 });
 
+// Login page
+//---------------------------
 app.get("/login", (req, res) => {
   const user_id = req.cookies["user_id"];
   const user = users[user_id];
   const templateVars = {
     user,
   }
-  res.render("login", templateVars);
-});
-
-app.get("/u/:id", (req, res) => {
-  const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
-  if (longURL) {
-    res.redirect(longURL);
+  if (user_id) {
+    res.redirect("/urls");
   } else {
-    res.status(404).send("Short URL not found");
+    res.render("login", templateVars);
   }
 });
 
+// Actual redirection page to bring you to the long URL input
+//---------------------------
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  const targetUrlObj = urlDatabase[id];
+  if (!targetUrlObj) {
+    return res
+    .status(404)
+    .end("Error 404: URL ID not found");
+  };
+  const longURL = urlDatabase[id].longURL;
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    res.status(404).send("404: Tiny URL not found");
+  }
+});
+
+// Page for each new URL
+//---------------------------
 app.get("/urls/:id", (req, res) => {
+  const id = req.params.id;
   const user_id = req.cookies["user_id"];
   const user = users[user_id];
+  const userUrls = urlsForUser(user_id, urlDatabase);
+  const targetUrlObj = urlDatabase[id];
+
+  if (!targetUrlObj) {
+    return res
+    .status(404)
+    .end("Error 404: URL ID not found");
+  };
+  const longURL = urlDatabase[id].longURL;
+
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user
+    longURL,
+    user,
   };
-  res.render("urls_show", templateVars);
+
+  if (!urlDatabase[id]) {
+    res.status(404).send('error 404: this short url does not exist.');
+  } else if (!user_id || !userUrls[id]) {
+    res.status(401).send('error 401: not your URL!');
+  } else {
+    res.render('urls_show', templateVars);
+  }
 });
 
 
-
+//-----------------------------------------------
 // POSTS START HERE
+//-----------------------------------------------
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
@@ -128,7 +145,7 @@ app.post("/register", (req, res) => {
     res
     .status(400)
     .send("Error status 400, both email and password must contain a value.");
-  } else if (userLookup("email", email)) {
+  } else if (userLookup(users, "email", email)) {
     res
     .status(400)
     .send("Error status 400, email already exists in system.");
@@ -145,26 +162,45 @@ app.post("/register", (req, res) => {
   };
 });
 
+// login page submission post
+//---------------------------
 app.post("/login", (req, res) => {
   // use the userlookup function to grab the user id associateed with email
-  const email = req.body.email;
-  const password = req.body.password;
-  let userObj = userLookup("email", email);
-  const id = userObj.id;
-  res
+  const inputEmail = req.body.email;
+  const inputPassword = req.body.password;
+  const userObj = userLookup(users, "email", inputEmail);
+
+  // edge case for logging in with a non-registered email
+  if (!userLookup(users, "email", inputEmail)) {
+    res.status(404).send("404: No user registered under that email.");
+
+  // for wrong password
+  } else if (userObj.password !== inputPassword) {
+    res.send("Wrong password!");
+
+  } else {
+    const id = userObj.id;
+    res
     .status(201)
     .cookie("user_id", id)
     .redirect(301, '/urls');
+  };
 });
 
+// login button in header
+//---------------------------
 app.post("/loginbutton", (req, res) => {
-  res.redirect(`/login`);
+    res.redirect(`/login`);
 });
 
+// register button in header
+//---------------------------
 app.post("/registerbutton", (req, res) => {
   res.redirect(`/register`);
 });
 
+// logout button in header
+//---------------------------
 app.post("/logout", (req, res) => {
   const user_id = req.cookies.user_id;
   res
@@ -172,33 +208,62 @@ app.post("/logout", (req, res) => {
     .redirect(301, '/login');
 });
 
+
 app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL;
+  const user_id = req.cookies["user_id"];
+  let longURL = req.body.longURL;
+
+  if (!longURL.startsWith("http://")) {
+    longURL = `https://${longURL}`
+  };
+  
   const id = generateRandomString();
-  urlDatabase[id] = longURL;
-  res.redirect(`/urls/${id}`);
+  urlDatabase[id] = {
+  "longURL": longURL,
+  "user_id": user_id,
+  };
+
+  if (!user_id) {
+    res.send("Only registered users can shorten URLs.")
+  } else {
+    res.redirect(`/urls/${id}`);
+  }
 });
 
+// edit button on URLs page
+//---------------------------
 app.post("/edit", (req, res) => {
   const id = req.body.id;
   res.redirect(`/urls/${id}`);
 });
 
+// delete button on URLs page
+//---------------------------
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
+  const user_id = req.cookies["user_id"];
+  const userUrls = urlsForUser(user_id, urlDatabase);
+
+  //ensures the user is logged in, owns the url, and the url exists
+  if (!user_id || !userUrls[id] || !id) {
+    return res.status(401).send('error 401: unauthorized action');
+  }
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
+// update button on new url page
+//---------------------------
 app.post("/urls/:id/update", (req, res) => {
   const id = req.params.id;
   const longURL = req.body.updatedURL
-  urlDatabase[id] = longURL;
+  urlDatabase[id].longURL = longURL;
   res.redirect(`/urls/${id}`);
 });
 
-
+//---------------------------
 // LISTEN ROUTE
+//---------------------------
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

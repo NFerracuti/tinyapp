@@ -18,6 +18,7 @@
   </head>
   <body>
     <%- include('partials/_header') %>
+    <% if (user) { %>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
       <table class="table">
@@ -33,7 +34,7 @@
           <% for (let id in urls) { %>
             <tr>
               <td><%= id %></td>
-              <td><%= urls[id] %></td>
+              <td><%= urls[id].longURL %></td>
               <td> 
                 <form method="POST" action="/edit">
                   <input type="hidden" name="id" value="<%= id %>">
@@ -50,6 +51,14 @@
         </tbody>
       </table>
     </main>
+    <% } else { %>
+      <div>
+       <h3>
+        <br>
+        <a>&nbsp &nbsp Welcome! To see your URLS: </a><a href="/login" >Login </a>or <a href="/register" >Register</a> 
+       </h3>
+       </div>
+    <% } %>
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
