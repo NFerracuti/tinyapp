@@ -24,10 +24,6 @@ const urlDatabase = {};
 // GETS START HERE
 //-----------------------------------------------
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
 // Home Page - displays your URLs
 //---------------------------
 app.get("/urls", (req, res) => {
