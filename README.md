@@ -10,15 +10,15 @@ Also shoutout to Pedro and Alvin, Nick's instructors!
 
 ## Final Product
 
-!["Main Page"](#)
+!["Main Page"](https://github.com/NFerracuti/tinyapp/blob/main/docs/mainPageScreen.png?raw=true)
 
-!["Create URL Page"](#)
+!["Create URL Page"](https://github.com/NFerracuti/tinyapp/blob/main/docs/createURLScreen.png?raw=true)
 
-!["Edit/Show URL Page"](#)
+!["Edit/Show URL Page"](https://github.com/NFerracuti/tinyapp/blob/main/docs/editURLScreen.png?raw=true)
 
-!["Login Page"](#)
+!["Login Page"](https://github.com/NFerracuti/tinyapp/blob/main/docs/loginScreen.png?raw=true)
 
-!["Registration Page"](#)
+!["Registration Page"](https://github.com/NFerracuti/tinyapp/blob/main/docs/registerScreen.png?raw=true)
 
 ## Dependencies
 
