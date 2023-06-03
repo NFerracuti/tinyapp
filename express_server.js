@@ -104,7 +104,7 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-// Page for each new URL
+// Page to show and update each new URL
 //---------------------------
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
@@ -128,6 +128,8 @@ app.get("/urls/:id", (req, res) => {
 
   if (!urlDatabase[id]) {
     res.status(404).send('error 404: this short url does not exist.');
+
+  // Check if the URL belongs to the user
   } else if (!user_id || !userUrls[id]) {
     res.status(401).send('error 401: not your URL!');
   } else {
@@ -140,6 +142,8 @@ app.get("/urls/:id", (req, res) => {
 // POSTS START HERE
 //-----------------------------------------------
 
+// registration page submission post
+//---------------------------
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -186,6 +190,7 @@ app.post("/login", (req, res) => {
     res
     .status(401)
     .send("401: Wrong password!");
+
   } else {
     const id = userObj.id;
     req.session.user_id = id;
@@ -215,12 +220,14 @@ app.post("/logout", (req, res) => {
     .redirect(301, '/login');
 });
 
-
+// urls submission button
+//---------------------------
 app.post("/urls", (req, res) => {
   const user_id = req.session["user_id"];
   let longURL = req.body.longURL;
 
-  if (!longURL.startsWith("http://")) {
+  // in case of url without http syntax
+  if (!longURL.startsWith("http://") && !longURL.startsWith("https://")) {
     longURL = `https://${longURL}`
   };
   
@@ -230,8 +237,10 @@ app.post("/urls", (req, res) => {
   "user_id": user_id,
   };
 
+  // block unregistered useres from submitting urls
   if (!user_id) {
     res.send("Only registered users can shorten URLs.")
+
   } else {
     res.redirect(`/urls/${id}`);
   }
@@ -263,9 +272,15 @@ app.post("/urls/:id/delete", (req, res) => {
 //---------------------------
 app.post("/urls/:id/update", (req, res) => {
   const id = req.params.id;
-  const longURL = req.body.updatedURL
+  let longURL = req.body.updatedURL;
+
+  if (!longURL.startsWith("http://") && !longURL.startsWith("https://")) {
+    longURL = `https://${longURL}`
+  };
+
   urlDatabase[id].longURL = longURL;
-  res.redirect(`/urls/${id}`);
+
+  res.redirect(`/urls`);
 });
 
 //---------------------------

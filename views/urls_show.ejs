@@ -21,8 +21,8 @@
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
           <form method="POST" action="/urls/<%= id %>/update">
             <label for="updatedURL">Updated Long URL:</label>
-            <input type="text" name="updatedURL" id="updatedURL" placeholder="Enter the updated URL" />
-            <button type="submit">Submit</button>
+            <input type="text" name="updatedURL" id="updatedURL" value="<%= longURL %>" />
+            <button type="submit" class="btn btn-outline-warning">Change URL</button>
           </form>
         </p> 
       </div>
