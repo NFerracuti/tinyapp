@@ -6,7 +6,7 @@ This version was made by Nick Ferracuti during the Lighthouse Labs' software dev
 
 Big thanks to the mentors at Lighthouse Labs. Shutouts to Zuhra Bakhshi, Johnny Labedzki, and especially Shaun Purslow for patiently helping me debug and improve my understanding of code.
 
-Also shoutout to Pedro and Alvin, Nick's instructors!
+Also shoutout to Pedro and Alvin, Nick's instructors! (:  :)
 
 ## Final Product
 
